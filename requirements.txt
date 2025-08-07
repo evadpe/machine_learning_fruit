@@ -1,0 +1,22 @@
+# Requirements pour l'identification de fruits et légumes
+
+# Django
+Django>=5.2.0
+
+# Traitement d'images
+Pillow>=10.0.0
+
+# Machine Learning
+tensorflow>=2.13.0
+numpy>=1.24.0
+
+# Data Science et visualisation (pour l'entraînement)
+matplotlib>=3.7.0
+seaborn>=0.12.0
+scikit-learn>=1.3.0
+
+# Kaggle API (pour télécharger le dataset)
+kaggle>=1.5.16
+
+# Utilitaires
+pandas>=2.0.0

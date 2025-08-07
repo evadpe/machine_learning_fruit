@@ -1,0 +1,632 @@
+{% extends 'fruits_identification/base.html' %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+    <div class="welcome-message">
+        <p>{{ message }}</p>
+    </div>
+
+    {% if formulaire %}
+        <!-- Formulaire d'upload -->
+        <div class="upload-container">
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content" id="uploadContent">
+                        <h3>Glissez votre photo ici</h3>
+                        <p>ou cliquez pour sélectionner un fichier</p>
+                        <input type="file" name="photo_fruit" id="photoFruit" accept="image/*" required>
+                        
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container" id="previewContainer" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="upload-actions">
+                    <button type="submit" class="btn-upload" id="btnUpload">
+                        Identifier ce fruit
+                    </button>
+                    <button type="button" class="btn-reset" id="btnReset" style="display: none;">
+                        Changer de photo
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>Instructions :</h3>
+            <ul>
+                <li>Formats acceptés : JPG, PNG, GIF, WebP</li>
+                <li>Taille maximale : 10 MB</li>
+                <li>Pour de meilleurs résultats, utilisez une photo claire et nette</li>
+                <li>Le fruit/légume doit être bien visible et centré</li>
+            </ul>
+        </div>
+
+    {% elif resultat %}
+        <!-- Résultat de l'identification -->
+        <div class="result-container">
+            <div class="result-success">
+                <div class="success-icon">✓</div>
+                <h3>Analyse terminée avec succès !</h3>
+                
+                <div class="file-details">
+                    <p><strong>Nom du fichier :</strong> {{ photo_name }}</p>
+                    <p><strong>Taille :</strong> {{ photo_size }}</p>
+                </div>
+            </div>
+
+            {% if prediction.success %}
+                <div class="prediction-result">
+                    <h3>Résultat de l'identification</h3>
+                    
+                    {% if prediction.is_demo %}
+                        <div class="demo-notice">
+                            <h4>Mode Démo</h4>
+                            <p>Aucun modèle entraîné n'est encore chargé. Résultat généré aléatoirement.</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="main-prediction">
+                        <div class="prediction-card">
+                            <div class="prediction-details">
+                                <h4>{{ prediction.predicted_class }}</h4>
+                                <p class="confidence">Confiance : {{ prediction.confidence|floatformat:1 }}%</p>
+                                <p class="model-info">Modèle : {{ prediction.model_type|title }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if prediction.top_3 %}
+                        <div class="top-predictions">
+                            <h4>Top 3 des prédictions :</h4>
+                            {% for pred in prediction.top_3 %}
+                                <div class="prediction-item">
+                                    <span class="rank">#{{ forloop.counter }}</span>
+                                    <span class="class-name">{{ pred.class }}</span>
+                                    <span class="confidence-score">{{ pred.confidence|floatformat:1 }}%</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="prediction-error">
+                    <h3>Erreur lors de l'identification</h3>
+                    <p>{{ prediction.error }}</p>
+                </div>
+            {% endif %}
+
+            <div class="actions">
+                <a href="{% url 'fruits_identification:identifier' %}" class="btn-new">
+                    Analyser une autre photo
+                </a>
+            </div>
+        </div>
+
+    {% elif erreur %}
+        <!-- Gestion des erreurs -->
+        <div class="result-container">
+            <div class="result-error">
+                <div class="error-icon">Error</div>
+                <h3>Erreur lors du traitement</h3>
+                <p>{{ erreur_message }}</p>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'fruits_identification:identifier' %}" class="btn-new">
+                    Réessayer
+                </a>
+                <a href="{% url 'fruits_identification:accueil' %}" class="btn-home">
+                    Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+    {% elif resultat_demo %}
+        <!-- Résultat de l'upload (démo) -->
+        <div class="result-container">
+            <div class="result-success">
+                <div class="success-icon">✓</div>
+                <h3>Photo uploadée avec succès !</h3>
+                
+                <div class="file-details">
+                    <p><strong>Nom du fichier :</strong> {{ photo_name }}</p>
+                    <p><strong>Taille :</strong> {{ photo_size }}</p>
+                </div>
+            </div>
+
+            <div class="demo-result">
+                <h3>Résultat de l'IA (Démo)</h3>
+                
+                <div class="prediction-card">
+                    <div class="prediction-icon">[Fruit]</div>
+                    <div class="prediction-details">
+                        <h4>Apple Red Delicious</h4>
+                        <p class="confidence">Confiance : 94.7%</p>
+                        <p class="description">Pomme rouge délicieuse, variété populaire originaire d'Iowa.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'fruits_identification:identifier' %}" class="btn-new">
+                    Analyser une autre photo
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0;
+        }
+        
+        .upload-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e0e8ff 100%);
+            transform: translateY(-2px);
+        }
+        
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #f0fff0 0%, #e8f5e8 100%);
+        }
+        
+        .upload-content h3 {
+            color: #667eea;
+            margin: 15px 0 10px 0;
+            font-size: 1.4em;
+        }
+        
+        .upload-content p {
+            color: #666;
+            margin: 0;
+            font-size: 1em;
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            opacity: 0.7;
+        }
+        
+        #photoFruit {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .upload-actions {
+            margin-top: 25px;
+            text-align: center;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-upload, .btn-reset, .btn-new, .btn-home {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-upload:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-upload:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .btn-reset {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-new {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-home {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+        
+        .btn-new:hover, .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px auto;
+            max-width: 600px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .instructions h3 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .instructions li {
+            padding: 8px 0;
+            color: #555;
+            font-size: 0.95em;
+        }
+        
+        .result-container {
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        
+        .result-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+        
+        .result-error {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+        
+        .success-icon, .error-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .result-success h3, .result-error h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.5em;
+        }
+        
+        .file-details {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .prediction-result, .demo-result {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .prediction-result h3, .demo-result h3 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .demo-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-notice h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .prediction-card {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .prediction-icon {
+            font-size: 3em;
+            margin-right: 20px;
+        }
+        
+        .prediction-details h4 {
+            color: #667eea;
+            margin: 0 0 5px 0;
+            font-size: 1.3em;
+        }
+        
+        .confidence {
+            color: #4CAF50;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+        
+        .model-info, .description {
+            color: #666;
+            margin: 10px 0 0 0;
+            line-height: 1.4;
+        }
+        
+        .top-predictions {
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .top-predictions h4 {
+            color: #667eea;
+            margin: 0 0 15px 0;
+        }
+        
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .prediction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 30px;
+        }
+        
+        .class-name {
+            flex: 1;
+            margin: 0 15px;
+            color: #333;
+        }
+        
+        .confidence-score {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+        
+        .prediction-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .prediction-error h3 {
+            margin: 0 0 10px 0;
+            color: #721c24;
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .upload-form {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px 15px;
+                min-height: 150px;
+            }
+            
+            .upload-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .prediction-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .prediction-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('photoFruit');
+            const fileInfo = document.getElementById('fileInfo');
+            const btnUpload = document.getElementById('btnUpload');
+            const btnReset = document.getElementById('btnReset');
+
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect();
+                }
+            });
+
+            // Click to select file
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // File input change
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Reset button
+            btnReset.addEventListener('click', function() {
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                btnReset.style.display = 'none';
+                
+                // Show original content
+                document.getElementById('uploadContent').style.display = 'block';
+                document.getElementById('previewContainer').style.display = 'none';
+            });
+
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (file) {
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        alert('Veuillez sélectionner un fichier image valide.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Validate file size (10MB max)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('Le fichier est trop volumineux. Taille maximale : 10 MB.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Show file info
+                    const fileSize = (file.size / 1024).toFixed(1);
+                    fileInfo.innerHTML = `
+                        <strong>Fichier sélectionné :</strong><br>
+                        ${file.name}<br>
+                        Taille : ${fileSize} KB
+                    `;
+                    fileInfo.style.display = 'block';
+
+                    // Enable upload button
+                    btnReset.style.display = 'inline-block';
+
+                    // Show preview if possible
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Hide original content, show preview
+                            document.getElementById('uploadContent').style.display = 'none';
+                            const previewContainer = document.getElementById('previewContainer');
+                            previewContainer.innerHTML = `
+                                <div style="max-width: 200px; margin: 0 auto;">
+                                    <img src="${e.target.result}" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                                </div>
+                                <h3 style="margin-top: 15px;">Photo prête à analyser !</h3>
+                            `;
+                            previewContainer.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

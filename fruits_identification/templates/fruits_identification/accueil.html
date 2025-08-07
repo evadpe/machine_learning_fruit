@@ -1,0 +1,27 @@
+{% extends 'fruits_identification/base.html' %}
+
+{% block title %}{{ titre }} - Accueil{% endblock %}
+
+{% block content %}
+    <div class="welcome-message">
+        <p>{{ message }}</p>
+    </div>
+
+    <div class="fruits-list">
+        <h3>Fruits que nous pouvons identifier :</h3>
+
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;">
+                {% for fruit in fruits %}
+                    <span class="fruit-item" style="font-size: 0.85em; margin: 3px; padding: 6px 12px;">
+                        {{ fruit }}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <p style="text-align: center; margin-top: 15px; color: #666; font-style: italic;">
+            Total : {{ nombre_fruits }} catégories de fruits
+        </p>
+    </div>
+{% endblock %}

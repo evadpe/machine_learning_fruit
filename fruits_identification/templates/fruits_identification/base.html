@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ titre }}{% endblock %}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        .welcome-message {
+            font-size: 1.2em;
+            color: #666;
+            margin: 20px 0;
+        }
+        
+        .fruits-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .fruits-list h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        
+        .fruit-item {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .nav-links {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .nav-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background: #764ba2;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #667eea;
+        }
+        
+        .identify-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .identify-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .identify-button:active {
+            transform: translateY(0);
+        }
+        
+        .identify-button::before {
+            content: "►";
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>{% block header %}{{ titre }}{% endblock %}</h1>
+        </header>
+        
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <div class="nav-links">
+            {% if request.resolver_match.url_name != 'accueil' %}
+                <a href="{% url 'fruits_identification:accueil' %}">Accueil</a>
+            {% endif %}
+            
+            {% if request.resolver_match.url_name != 'identifier' %}
+                <a href="{% url 'fruits_identification:identifier' %}" class="identify-button">Identifier un fruit</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
